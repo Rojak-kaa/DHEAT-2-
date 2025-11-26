@@ -1,0 +1,36 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "xprotocol",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 33060,
+            "driver": "MySQL",
+            "name": "DHEAT",
+            "database": "inventory",
+            "username": "root",
+            "password": "UoW192411@",
+            "connectionTimeout": 50
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "xprotocol",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 33060,
+            "driver": "MySQL",
+            "name": "OrderList",
+            "database": "order_list",
+            "username": "root",
+            "password": "UoW192411@",
+            "connectionTimeout": 50
+        }
+    ]
+}
