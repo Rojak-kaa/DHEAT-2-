@@ -6,7 +6,8 @@ public class Main {
 
     public static void main(String[] args) {
         Order order = new Order();
-        Scanner scan= new Scanner(System.in);
+        Scanner sc= new Scanner(System.in);
+        
 
         int userChoice;
 
@@ -24,7 +25,7 @@ public class Main {
         System.out.println("2.Kitchen Staff");
         System.out.println("3. END");
         System.out.print("Select your role: ");
-        userChoice = scan.nextInt();
+        userChoice = sc.nextInt();
         switch(userChoice)
         {
             case 1 ->
@@ -39,14 +40,14 @@ public class Main {
             }
             case 3 ->
             {
-                System.out.println("Exiting......");
+                System.out.println("Bye. See you next time!");
                 System.exit(0);
                 break;
 
             }
 
             default -> {
-                System.out.println("Invalid choice. Exiting program.");
+                System.out.println("Invalid choice.Enter 1,2 or 3 only.");
                 break;
             }
         }

@@ -21,7 +21,7 @@ public class DBOrder{
             System.out.println("Connection successful!");
 
             Statement stmt = conn.createStatement();
-            ResultSet ol = stmt.executeQuery("SELECT * FROM cus_order");
+            ResultSet ol = stmt.executeQuery("SELECT * FROM order_list");
 
             while(ol.next()) {
                 System.out.println(ol.getString("order_id"));
