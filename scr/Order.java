@@ -248,7 +248,7 @@ private void initializeOrderDatabase() {
 public void updateStatus() {
     //show the order that have "Done" status
 
-    
+
     System.out.print("Enter Order ID to update: ");
     String oid = sc.next();
 
@@ -348,14 +348,15 @@ public void updateStatus() {
     // --------------------------- // VIEW ORDER // --------------------------- 
     public void viewOrder() { 
         System.out.println("====== View All Orders ======"); 
-        String sql = "SELECT order_id,i_id,i_name,i_quantity,i_remark FROM order_items"; 
+        String sql = "SELECT order_id,i_id,i_name,i_quantity,i_remark,order_status FROM order_items"; 
         try (Statement stmt = orderConn.createStatement(); ResultSet rs = stmt.executeQuery(sql))
         { while (rs.next()) { 
             System.out.println("Order ID: " + rs.getString("order_id") + 
             " | Item ID: " + rs.getString("i_id") +
             " | Item Name: "+ rs.getString("i_name") + 
             " | Quantity: " + rs.getInt("i_quantity") + 
-            " | Remark: " + rs.getString("i_remark") ); 
+            " | Remark: " + rs.getString("i_remark")+
+            " | Order Status: "+ rs.getString("order_status") ); 
             }
         } catch (SQLException e) { System.out.println("Failed to query orders: " + e.getMessage()); } }
 
@@ -374,10 +375,12 @@ public void updateStatus() {
                 System.out.println("Item ID: " + rs.getString("i_id")); 
                 System.out.println("Quantity: " + rs.getInt("i_quantity")); 
                 System.out.println("Remark: " + rs.getString("i_remark")); 
+                System.out.println("Status: "+rs.getString("order_status"));
                 System.out.println("------------------------"); // Load current data 
                 i_id = rs.getString("i_id"); 
                 i_quantity = rs.getInt("i_quantity"); 
                 i_remark = rs.getString("i_remark"); 
+                order_status = rs.getString("order_status");
                 return true; } 
                 else { 
                     System.out.println("Order not found."); 
