@@ -26,6 +26,7 @@ public class Main {
         System.out.println("3. END");
         System.out.print("Select your role: ");
         userChoice = sc.nextInt();
+        sc.nextLine();
         switch(userChoice)
         {
             case 1 ->

@@ -21,7 +21,13 @@ public class Order {
     public Order() {
         initializeOrderDatabase();
         initializeInventoryDatabase();
+
+        if (orderConn == null || invtConn == null) {
+            System.out.println("Database connection failed. Exiting program.");
+            System.exit(1);
+        }
     }
+
 
     // =============================
     // CONNECT TO order_list
@@ -33,17 +39,16 @@ private void initializeOrderDatabase() {
             "root",
             "UoW192411@"
         );
-        orderConn.setAutoCommit(false); // <<--- HERE, right after connecting
+        orderConn.setAutoCommit(false);
         System.out.println("Order database connected!");
     } catch (SQLException e) {
         System.out.println("Order DB failed: " + e.getMessage());
+        this.orderConn = null; // explicit
     }
 }
 
 
-    // =============================
     // CONNECT TO inventory
-    // =============================
     private void initializeInventoryDatabase() {
         try {
             this.invtConn = DriverManager.getConnection(
@@ -64,13 +69,6 @@ private void initializeOrderDatabase() {
     // TAKE ORDER (create order + insert multiple items)
     // =====================================================
     public void takeOrder() {
-
-        try {
-        orderConn.commit();   // <--- SAVE order_items + orders to MySQL
-        invtConn.commit();    // <--- SAVE stock changes to MySQL
-        } catch (SQLException e) {
-        e.printStackTrace();
-        }
 
 
         System.out.println("\n===== Take Order =====");
@@ -173,13 +171,40 @@ private void initializeOrderDatabase() {
         System.out.println("Order ID: " + order_id);
         viewSingleOrder(order_id);
 
-        try {
-            orderConn.commit();   // Save to order_list database
-            invtConn.commit();    // Save to inventory database
-            System.out.println("Changes saved to MySQL!");
-        } catch (SQLException e) {
-            System.out.println("Commit failed: " + e.getMessage());
+// ===== After all orders and stock updates =====
+    try {
+        orderConn.commit();   // Save orders & order_items
+        invtConn.commit();    // Save inventory changes
+        System.out.println("Changes saved to MySQL!");
+    }  catch (SQLException e) {
+    System.out.println("Commit failed: " + e.getMessage());
+    try {
+        orderConn.rollback();
+        invtConn.rollback();
+        System.out.println("Rolled back changes due to error.");
+    } catch (SQLException ex) {
+        System.out.println("Rollback failed: " + ex.getMessage());
+    }
+    }
+
+          do{
+        System.out.println("-------Comfimation--------");
+        System.out.println("1.Edit order");
+        System.out.println("2.Comfirm order");
+        System.out.print("Enter num: ");
+        choice=sc.nextInt();
+        switch(choice)
+        {
+            case 1 ->{editOrder();}
+            case 2 -> {break;}
+            default->
+            {
+                System.out.println("Invalid number.");
+                break;}
         }
+        }while(choice != 1 && choice !=2);
+
+
 
     }
 
@@ -277,10 +302,12 @@ private void initializeOrderDatabase() {
         } catch (SQLException e) { System.out.println("Failed to query orders: " + e.getMessage()); } }
 
         // --------------------------- // SEARCH ORDER (by ID) // --------------------------- 
-        public boolean searchOrder() { 
-            System.out.print("Enter Order ID: "); 
-            order_id = sc.nextLine(); 
-            String sql = "SELECT * FROM orders_list WHERE order_id = ?"; 
+        public boolean searchOrder(String searchOrderID) { 
+            
+            System.out.print("Order ID: "); 
+            
+            String sql = "SELECT * FROM orders WHERE order_id = ?";
+
             try (PreparedStatement pstmt = orderConn.prepareStatement(sql))
             { 
                 pstmt.setString(1, order_id); 
@@ -303,43 +330,57 @@ private void initializeOrderDatabase() {
 
         // --------------------------- // EDIT ORDER // --------------------------- 
         public void editOrder() { 
-            if (!searchOrder()) 
-            return; 
+            if (!searchOrder(order_id)) {
+                System.out.println("Cannot edit. Order not found.");
+                return;
+            }
+
             System.out.println("====== Edit Order ======"); 
             System.out.println("1. Edit Remark"); 
             System.out.println("2. Edit Quantity"); 
             System.out.println("3. Confirm"); 
             System.out.print("Enter choice: "); 
             choice = sc.nextInt(); 
-            sc.nextLine(); switch (choice) { 
+            sc.nextLine(); 
+            switch (choice) { 
                 case 1 -> { System.out.print("New Remark: "); 
                 String newRemark = sc.nextLine(); 
-                String sql = "UPDATE orders_list SET i_remark = ? WHERE order_id = ?"; 
+                String sql = "UPDATE orders_items SET i_remark = ? WHERE order_id = ?"; 
                 try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) { 
                     pstmt.setString(1, newRemark); 
                     pstmt.setString(2, order_id); 
 
                     
-
-                    if (pstmt.executeUpdate() > 0) System.out.println("Remark updated successfully."); 
+                    if (pstmt.executeUpdate() > 0) {
+                        System.out.println("Remark updated successfully."); 
+                    }
                 } catch (SQLException e) { System.out.println("Update failed: " + e.getMessage()); } } 
                 case 2 -> { 
                     System.out.print("New Quantity: "); 
                     int newQty = sc.nextInt(); 
 
-                    String sql = "UPDATE orders_list SET i_quantity = ? WHERE order_id = ?"; 
+                    String sql = "UPDATE order_items SET i_quantity = ? WHERE order_id = ? AND i_id = ?";
+
 
                     try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) 
                     { 
                         pstmt.setInt(1, newQty); 
                         pstmt.setString(2, order_id); 
+                        pstmt.setString(3, i_id);
 
                         
                         if (pstmt.executeUpdate() > 0) System.out.println("Quantity updated successfully."); 
                     } catch (SQLException e) { System.out.println("Update failed: " + e.getMessage()); } } 
-                case 3 -> { 
-                    return; } 
+                case 3 -> {
+                        System.out.println("Order confirmed.");
+                        return; 
                 } 
+                default ->
+                {
+                    System.out.println("Invalid choice.");
+
+                }
+                }
             }
     
 
