@@ -240,7 +240,65 @@ private void initializeOrderDatabase() {
         } catch (SQLException e) {
             System.out.println("Failed inserting item: " + e.getMessage());
         }
+
+
     }
+
+
+public void updateStatus() {
+    //show the order that have "Done" status
+
+    
+    System.out.print("Enter Order ID to update: ");
+    String oid = sc.next();
+
+    // Check if order exists
+    String checkSql = "SELECT * FROM order_items WHERE order_id = ?";
+    try (PreparedStatement checkPs = orderConn.prepareStatement(checkSql)) {
+        checkPs.setString(1, oid);
+        ResultSet rs = checkPs.executeQuery();
+        if (!rs.next()) {
+            System.out.println("Order ID not found.");
+            return;
+        }
+    } catch (SQLException e) {
+        System.out.println("Search failed: " + e.getMessage());
+        return;
+    }
+
+    System.out.println("\n--- Update Order Status ---");
+    System.out.println("1. Mark as COMPLETE");
+    System.out.println("2. Exit");
+    System.out.print("Enter your choice: ");
+    int ch = sc.nextInt();
+
+    if (ch == 2) {
+        System.out.println("Status update cancelled.");
+        return;
+    }
+
+    if (ch != 1) {
+        System.out.println("Invalid choice.");
+        return;
+    }
+
+    // Update to COMPLETE
+    String sql = "UPDATE order_items SET order_status = 'Complete' WHERE order_id = ?";
+
+    try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
+        ps.setString(1, oid);
+
+        if (ps.executeUpdate() > 0) {
+            orderConn.commit();
+            System.out.println("Order status updated to COMPLETE!");
+        }
+
+    } catch (SQLException e) {
+        System.out.println("Status update failed: " + e.getMessage());
+        try { orderConn.rollback(); } catch (SQLException ex) {}
+    }
+}
+
 
 
     // Reduce stock in correct table
@@ -392,7 +450,7 @@ private void initializeOrderDatabase() {
             System.out.println("\n====== Waiter/Cashier Menu ======"); 
             System.out.println("1. Take Order"); 
             System.out.println("2. View Orders"); 
-            System.out.println("3. Edit Order"); 
+            System.out.println("3. Update Status"); 
             System.out.println("4. Exit"); 
             System.out.print("Enter your choice: "); 
             choice = sc.nextInt(); 

@@ -15,7 +15,7 @@ public class Payment {
     public void payBill()
     {
         //protected double totalbill;
-        //show bill
+        //show bill(from database)
 
         System.out.println("You total amount is :" ); //+ total price from the order there
         do{
