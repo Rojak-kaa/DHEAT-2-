@@ -1,7 +1,7 @@
 import java.sql.*;
 import java.util.*;
 import java.time.LocalDate;
-import java.time.format.DateFormatter;
+import java.time.format.DateTimeFormatter;
 
 public class Billing {
 
@@ -13,7 +13,7 @@ public class Billing {
     private String orderId;
     //private int quantity;
     //private double price;
-    //private double totalPrice;
+    private double totalPrice;
     private double grandTotal;
     private String paymentMethod;
     private String billingDate;
@@ -30,7 +30,7 @@ public class Billing {
 
     private void initializeOrderConnection(){
         try{
-            this.conn = DrverManager.getConnection(
+            this.orderConn = DriverManager.getConnection(
                     "jdbc:mysql://127.0.0.1:3306/order_list",
                     "root",
                     "UoW192411@"
@@ -44,7 +44,7 @@ public class Billing {
 
     private void initializeBillingConnection() {
         try {
-            this.bilingConn = DriverManager.getConnection(
+            this.billingConn = DriverManager.getConnection(
                     "jdbc:mysql://127.0.0.1:3306/billing",
                     "root",
                     "UoW192411@"
@@ -62,13 +62,13 @@ public class Billing {
         String billId = "B001";
         String sql = "SELECT bill_id FROM billing ORDER BY bill_id DESC LIMIT 1";
 
-        try (Statement stmt = conn.createStatement();
+        try (Statement stmt = billingConn.createStatement();
         ResultSet rs = stmt.executeQuery(sql)) {
 
             if (rs.next()) {
                 String lastId = rs.getString("bill_id");
                 int number = Integer.parseInt(lastId.substring(1))+1;
-                billId = String.format("B%01d", number);
+                billId = String.format("B%03d", number);
             }
         }catch (SQLException e) {
             System.out.println("Error generating Bill ID: " +e.getMessage());
@@ -78,23 +78,23 @@ public class Billing {
 
     //Calculate bill
     public void calculateBill(String orderId){
-        this.order_id = orderId;
-        this.bill_id = generateBillId();
+        this.orderId = orderId;
+        this.billId = generateBillId();
 
         LocalDate now = LocalDate.now();
-        DateFormatter formatter = DateFormatter.ofPattern("yyyy-mm-dd");
-        this.bill_date = now.format(formatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        this.billingDate = now.format(formatter);
 
         String sql = "SELECT SUM(item_total) as total FROM order_items WHERE order_id = ?";
 
-        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) {
             pstmt.setString(1, orderId);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
                 //this.price = rs.price("price");
-                this.total_price = rs.getDouble("total");
-                this.grand_total += total_price;
+                this.totalPrice = rs.getDouble("total");
+                this.grandTotal += totalPrice;
 
                 displayBill();
                 processPayment();
@@ -133,7 +133,7 @@ public class Billing {
     private void displayOrderItems() {
         String sql = "SELECT i_name, i_quantity, i_price, item_total FROM order_items WHERE order_id = ?";
 
-        try (PreparedStatement pstmt = orderConn.preparedStatement(sql)) {
+        try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) {
             pstmt.setString(1, orderId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -182,9 +182,9 @@ public class Billing {
     //Save billing to database
     public boolean saveBilling() {
         String sql = "INSERT INTO billing (bill_id, order_id, grand_total, payment_method, billing_date) " +
-                     "VALUES ("?, ?, ?, ?, ?)";
+                     "VALUES (?, ?, ?, ?, ?)";
 
-        try(PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        try(PreparedStatement pstmt = billingConn.prepareStatement(sql)) {
 
             pstmt.setString(1, billId);
             pstmt.setString(2, orderId);
@@ -200,8 +200,7 @@ public class Billing {
             if (rows > 0) {
                 billingConn.commit();
                 System.out.println("\n Bill saved successfully!");
-                System.out.println("Bill ID: " + bill_id);
-                printReceipt();
+                System.out.println("Bill ID: " + billId);
                 return true;
             }
         }catch (SQLException e) {
@@ -209,7 +208,7 @@ public class Billing {
             try {
                 billingConn.rollback();
             } catch (SQLException ex) {
-                System.out.println("Rollback failed: " +ex.getMessge());
+                System.out.println("Rollback failed: " +ex.getMessage());
             }
         }
         return false;
