@@ -215,32 +215,32 @@ public class Billing {
         return false;
     }
 
-    //billing menu
-    public void billingSystem() {
-        int choice;
+    // //billing menu
+    // public void billingSystem() {
+    //     int choice;
 
-        do{
-            System.out.println("\n====== BILLING SYSTEM ======");
-            System.out.println("1. Generate Bill");
-            System.out.println("2. View All Bills");
-            System.out.println("3. Search Bill");
-            System.out.println("4. Exit");
-            System.out.print("Enter choice: ");
-            choice = sc.nextInt();
+    //     do{
+    //         System.out.println("\n====== BILLING SYSTEM ======");
+    //         System.out.println("1. Generate Bill");
+    //         System.out.println("2. View All Bills");
+    //         System.out.println("3. Search Bill");
+    //         System.out.println("4. Exit");
+    //         System.out.print("Enter choice: ");
+    //         choice = sc.nextInt();
 
-            switch (choice) {
-                case 1 -> {
-                    System.out.print("Enter Order ID: ");
-                    String oid = sc.next();
-                    calculateBill(oid);
-                }
-                case 2 -> viewAllBills();
-                case 3 -> searchBill();
-                case 4 -> System.out.println("Exiting billing system...");
-                default -> System.out.println("Invalid choice!");
-            }
-        } while (choice != 4);
-    }
+    //         switch (choice) {
+    //             case 1 -> {
+    //                 System.out.print("Enter Order ID: ");
+    //                 String oid = sc.next();
+    //                 calculateBill(oid);
+    //             }
+    //             case 2 -> viewAllBills();
+    //             case 3 -> searchBill();
+    //             case 4 -> System.out.println("Exiting billing system...");
+    //             default -> System.out.println("Invalid choice!");
+    //         }
+    //     } while (choice != 4);
+    // }
 
     //close connection
     public void closeConnections() {

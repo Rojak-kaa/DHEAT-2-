@@ -6,6 +6,7 @@ public class Main {
 
     public static void main(String[] args) {
         Order order = new Order();
+        Billing billing = new Billing();
         Scanner sc= new Scanner(System.in);
         
 
@@ -33,6 +34,8 @@ public class Main {
             {
                 
                 order.orderSystem();
+                billing.calculateBill(order.order_id);
+
             }
             case 2 ->
             {
