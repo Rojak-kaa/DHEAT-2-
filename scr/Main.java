@@ -7,6 +7,7 @@ public class Main {
     public static void main(String[] args) {
         Order order = new Order();
         Scanner sc= new Scanner(System.in);
+        //KitchenStaff ks = new KitchenStaff();
         
 
         int userChoice;
@@ -21,7 +22,7 @@ public class Main {
         System.out.println("---------------------------------------------");
         System.out.println("Welcome to DHEAT Restaurant Management System");
         System.out.println("---------------------------------------------");
-        System.out.println("1.Waiter&Casher");
+        System.out.println("1.Waiter&Cashier");
         System.out.println("2.Kitchen Staff");
         System.out.println("3. END");
         System.out.print("Select your role: ");
@@ -36,7 +37,7 @@ public class Main {
             }
             case 2 ->
             {
-                //KitchenStaff ks = new KitchenStaff();
+                
                 //ks.updateStatus();
             }
             case 3 ->

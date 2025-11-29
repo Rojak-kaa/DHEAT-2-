@@ -6,6 +6,8 @@ public class Order {
     private Connection orderConn;   // order_list
     private Connection invtConn;    // inventory
     private Scanner sc = new Scanner(System.in);
+   // private Payment pay ;
+   private Payment pay;
 
 
     // Order fields
@@ -30,6 +32,8 @@ public class Order {
             System.out.println("Database connection failed. Exiting program.");
             System.exit(1);
         }
+
+        pay = new Payment(orderConn);
     }
 
 
@@ -212,23 +216,36 @@ private void initializeOrderDatabase() {
         System.out.println("1.Edit order");
         System.out.println("2.Cancle order");
         System.out.println("3.Comfirm order");
+        System.out.println("4.Exit");
         System.out.print("Enter num: ");
         choice=sc.nextInt();
+        sc.nextLine();
         switch(choice)
         {
             case 1 ->{editOrder();}
             case 2 -> {
                 System.out.println("1.Cancle order");
                 System.out.println("2.Cancle item");
+                System.out.println("3.Exit");
+                System.out.print("Enter num:");
                 choice = sc.nextInt();
+                sc.nextLine();
                 switch(choice)
                 {
                     case 1 ->{cancelOrder(order_id);break;}
                     case 2 ->{deleteItem(order_id);break;}
+                    case 3 ->{continue;}
                 }
                 return;
             }
-            case 3 ->{return;}
+            case 3 ->{
+                Payment payment = new Payment(orderConn);  // pass order database connection
+                payment.payBill(order_id);
+                return;}
+            case 4 ->{
+                break;
+            }
+                
             default->
             {
                 System.out.println("Invalid number.");
@@ -401,7 +418,7 @@ public void deleteItem(String orderId) {
 
     // Insert into orders table
     private void createNewOrder(String orderId) {
-        String sql = "INSERT INTO orders(order_id, order_status) VALUES(?, 'Pending')";
+    String sql = "INSERT INTO orders(order_id, order_status, order_date) VALUES(?, 'Pending', NOW())";
         try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
             ps.setString(1, orderId);
             int row = ps.executeUpdate();
@@ -589,7 +606,6 @@ public void updateStatus() {
 
         // --------------------------- // EDIT ORDER // --------------------------- 
 public void editOrder() {
-
     if (this.order_id == null) {
         System.out.println("No active order to edit.");
         return;
@@ -597,35 +613,60 @@ public void editOrder() {
 
     String current_id = this.order_id;
 
-    // Load current order item into object fields
-    if (!searchOrder(current_id)) {
-        System.out.println("Cannot edit. Order not found.");
+    // 1. List all items in this order
+    String sqlList = "SELECT i_id, i_name, i_quantity, i_remark FROM order_items WHERE order_id = ?";
+    List<String> itemIds = new ArrayList<>();
+    try (PreparedStatement ps = orderConn.prepareStatement(sqlList)) {
+        ps.setString(1, current_id);
+        ResultSet rs = ps.executeQuery();
+        System.out.println("\n====== Items in Order ======");
+        while (rs.next()) {
+            String id = rs.getString("i_id");
+            String name = rs.getString("i_name");
+            int qty = rs.getInt("i_quantity");
+            String remark = rs.getString("i_remark");
+            System.out.println("Item ID: " + id + " | Name: " + name + " | Qty: " + qty + " | Remark: " + remark);
+            itemIds.add(id);
+        }
+    } catch (SQLException e) {
+        System.out.println("Failed to load items: " + e.getMessage());
         return;
     }
 
-    System.out.println("====== Edit Order ======");
+    if (itemIds.isEmpty()) {
+        System.out.println("No items in this order to edit.");
+        return;
+    }
+
+    // 2. Ask which item to edit
+    String editItemId;
+    while (true) {
+        System.out.print("Enter the Item ID you want to edit: ");
+        editItemId = sc.next();
+        if (itemIds.contains(editItemId)) break;
+        System.out.println("Invalid Item ID. Try again.");
+    }
+
+    // 3. Choose what to edit
     System.out.println("1. Edit Remark");
     System.out.println("2. Edit Quantity");
-    System.out.println("3. Confirm");
+    System.out.println("3. Cancel");
     System.out.print("Enter choice: ");
     int choice = sc.nextInt();
     sc.nextLine();
 
     switch (choice) {
-
         case 1 -> {
             System.out.print("New Remark: ");
             String newRemark = sc.nextLine();
-
             String sql = "UPDATE order_items SET i_remark = ? WHERE order_id = ? AND i_id = ?";
             try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) {
                 pstmt.setString(1, newRemark);
                 pstmt.setString(2, current_id);
-                pstmt.setString(3, i_id);
-
+                pstmt.setString(3, editItemId);
                 if (pstmt.executeUpdate() > 0) {
-                    System.out.println("Remark updated successfully.");
                     orderConn.commit();
+                    System.out.println("Remark updated successfully.");
                 }
             } catch (SQLException e) {
                 System.out.println("Update failed: " + e.getMessage());
@@ -633,34 +674,63 @@ public void editOrder() {
         }
 
         case 2 -> {
-            System.out.print("New Quantity: ");
-            int newQty = sc.nextInt();
+            // Get current stock
+            int currentStock = 0;
+            String table = "";
+            String sqlStock = """
+                SELECT f_quantity AS qty, 'food' AS tbl FROM food WHERE f_id = ?
+                UNION
+                SELECT b_quantity, 'beverage' FROM beverage WHERE b_id = ?
+                UNION
+                SELECT d_quantity, 'dessert' FROM dessert WHERE d_id = ?
+            """;
+            try (PreparedStatement ps = invtConn.prepareStatement(sqlStock)) {
+                ps.setString(1, editItemId);
+                ps.setString(2, editItemId);
+                ps.setString(3, editItemId);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    currentStock = rs.getInt("qty");
+                    table = rs.getString("tbl");
+                }
+            } catch (SQLException e) {
+                System.out.println("Failed to get stock: " + e.getMessage());
+                return;
+            }
 
-            // Update order_items
-            String sql = "UPDATE order_items SET i_quantity = ? WHERE order_id = ? AND i_id = ?";
-            try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) {
+            // Ask new quantity
+            int newQty;
+            do {
+                System.out.print("New Quantity: ");
+                newQty = sc.nextInt();
+                if (newQty <= 0) System.out.println("Quantity must be more than 0.");
+                else if (newQty > currentStock) System.out.println("Not enough stock! Available: " + currentStock);
+            } while (newQty <= 0 || newQty > currentStock);
 
-                pstmt.setInt(1, newQty);
-                pstmt.setString(2, current_id);
-                pstmt.setString(3, i_id);
-
-                if (pstmt.executeUpdate() > 0) {
-                    System.out.println("Quantity updated successfully.");
+            // Update order_items and inventory
+            String sqlUpdate = "UPDATE order_items SET i_quantity = ?, item_total = i_price * ? WHERE order_id = ? AND i_id = ?";
+            try (PreparedStatement ps = orderConn.prepareStatement(sqlUpdate)) {
+                ps.setInt(1, newQty);
+                ps.setInt(2, newQty);
+                ps.setString(3, current_id);
+                ps.setString(4, editItemId);
+                if (ps.executeUpdate() > 0) {
+                    reduceStock(table, editItemId, currentStock - newQty); // update inventory
                     orderConn.commit();
+                    invtConn.commit();
+                    System.out.println("Quantity updated successfully.");
                 }
             } catch (SQLException e) {
                 System.out.println("Update failed: " + e.getMessage());
+                try { orderConn.rollback(); invtConn.rollback(); } catch (SQLException ex) {}
             }
         }
 
-        case 3 -> {
-            System.out.println("Order confirmed.");
-            return;
-        }
-
+        case 3 -> System.out.println("Edit cancelled.");
         default -> System.out.println("Invalid choice.");
     }
 }
+
 
     
 
