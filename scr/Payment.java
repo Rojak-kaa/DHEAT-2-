@@ -4,77 +4,58 @@ public class Payment {
 
     protected double tTotal;
     protected int choice;
-    protected double cashAmount ;
-    Scanner sc = new Scanner(System.in); 
+    protected double cashAmount;
+    Scanner sc = new Scanner(System.in);
 
-    public double getTotal()
-    {
+    public double getTotal() {
         return tTotal;
     }
 
-    public void payBill()
-    {
-        //protected double totalbill;
-        //show bill(from database)
+    public void payBill(double totalAmount) {
 
-        System.out.println("You total amount is :" ); //+ total price from the order there
-        do{
-        System.out.println("Payment method: \n1.Cash \n2.QR/Debit card");
-        System.out.println("Enter num:");
-        choice = sc.nextInt();
-        sc.nextLine();
-            if(choice == 1)
-            {
-                System.out.println("Payment method: Cash");
-                System.out.println("Total Amount is ");//+total amount from the order page
-                System.out.print("Enter amount:");
-                cashAmount = sc.nextDouble();
+        System.out.println("Your total amount is: RM " + totalAmount);
 
-                /*if(cashAmount < totalAmount )
-                {
-                    do{
-                    change = totalAmount - cashAmount;
-                    System.out.println("You still need to paid "+ change);
-                    System.our.print("Enter amount:" );
-                    }while(totalAmount = cashAmount);
-                    break;
-                
-                } 
-                    else if(cashAmount > totalAmount )
-                    {
-                    
-                        change = cashAmount - totalAmount;
-                        System.out.println("Change: "+ change);
-                        break;
-                        
-                        }
-                    
-                    }
-                        else if(cashAmount == totalAmount )
-                            {
-                                break;}
-                        System.out.println("Payment Successful");
-                        break;
-                */
+        // --- Choose payment method ---
+        do {
+            System.out.println("\nPayment Method:");
+            System.out.println("1. Cash");
+            System.out.println("2. QR / Debit Card");
+            System.out.print("Enter number: ");
+            choice = sc.nextInt();
+        } while (choice != 1 && choice != 2);
 
-            }
-            else if(choice == 2)
-            {
-                System.out.println("Payment method : QR / Debit card");
-                System.out.println("Total Amount is ");//+total amount from the order page
-                System.out.println("Payment Successful");
+        // --- CASH PAYMENT ---
+        if (choice == 1) {
+            System.out.println("\nPayment method: CASH");
+            System.out.println("Total Amount: RM " + totalAmount);
 
-            }
-            else
-                {
-                    System.out.println("Invalid number. Try again.");
+            double cash;
+            do {
+                System.out.print("Enter cash amount: RM ");
+                cash = sc.nextDouble();
+
+                if (cash < totalAmount) {
+                    System.out.println("❌ Not enough! You still need RM " + (totalAmount - cash));
                 }
 
+            } while (cash < totalAmount);
 
-            }while(choice != 1 && choice !=2 );
+            double change = cash - totalAmount;
 
-            System.out.println("Thank you for your purchace.");
+            System.out.println("Payment Successful!");
+
+            if (change > 0) {
+                System.out.println("Your change: RM " + change);
+            }
+        }
+
+        // --- QR / Debit Card ---
+        else if (choice == 2) {
+            System.out.println("\nPayment method: QR / Debit Card");
+            System.out.println("Processing...");
+            System.out.println("Payment Successful!");
+        }
+
+        System.out.println("\nThank you for your purchase!");
     }
-
-    
 }
