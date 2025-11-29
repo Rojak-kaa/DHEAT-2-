@@ -50,7 +50,7 @@ public class DBConn {
                 String name = rs.getString(2);     // Second column (name)  
                 double price = rs.getDouble(4);    // Fourth column (price)
                 
-                System.out.println(id + " | " + name + " | Price: RM" + price);
+                System.out.println(id + " | " + name + " | Price: RM " + price);
             }
         }
     }

@@ -21,7 +21,7 @@ public class DBOrder{
             System.out.println("Connection successful!");
 
             Statement stmt = conn.createStatement();
-            ResultSet ol = stmt.executeQuery("SELECT * FROM cus_order");
+            ResultSet ol = stmt.executeQuery("SELECT * FROM order_items");
 
             while(ol.next()) {
                 System.out.println(ol.getString("order_id"));
@@ -29,7 +29,7 @@ public class DBOrder{
                 System.out.println(ol.getString("i_name"));
                 System.out.println(ol.getInt("i_quantity"));
                 System.out.println(ol.getString("i_remark"));
-                System.out.println(ol.getDouble("total_price"));
+                //System.out.println(ol.getDouble("total_price"));
 
             }
 
