@@ -18,12 +18,12 @@ public class KitchenStaff {
             if (pendingOrders.isEmpty()) {
                 System.out.println("No pending orders at the moment.");
             } else {
-                System.out.println("Pending Orders:");
-                System.out.println("------------------------------------------");
+                System.out.println("\nPending Orders:");
+                System.out.println("---------------------------------------------------------------------");
                 for (String orderInfo : pendingOrders) {
                     System.out.println(orderInfo);
                 }
-                System.out.println("------------------------------------------");
+                System.out.println("---------------------------------------------------------------------");
             }
 
             System.out.println("1. Update Order Status to READY");

@@ -30,13 +30,13 @@ public class DBConn {
     }
     
     private static void showMenu(Connection conn) throws SQLException {
-        System.out.println("\n======= MENU =======");
+        System.out.println("\n================== MENU ====================");
         
         showCategory(conn, "SELECT * FROM food", "FOOD");
         showCategory(conn, "SELECT * FROM beverage", "DRINK"); 
         showCategory(conn, "SELECT * FROM dessert", "DESSERT");
         
-        System.out.println("===================\n");
+        System.out.println("==============================================\n");
     }
     
     private static void showCategory(Connection conn, String query, String categoryName) throws SQLException {
