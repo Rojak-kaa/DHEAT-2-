@@ -50,7 +50,7 @@ public class KitchenStaff {
             }
 
             // Update the order status using Order class
-            boolean updated = o.updateOrderStatus(orderID, "READY");
+            boolean updated = o.updateOrderStatus(orderID, "READY","PENDING");
 
             if (updated) {
                 System.out.println("Order " + orderID + " marked as READY! Notify waiter.");

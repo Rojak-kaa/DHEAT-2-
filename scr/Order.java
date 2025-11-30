@@ -279,24 +279,23 @@ private void initializeOrderDatabase() {
     }
 
 
-       public boolean updateOrderStatus(String orderID, String newStatus) {
-        String sql = "UPDATE order_items SET order_status = ? WHERE order_id = ? AND order_status = 'Pending'";
-        try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
-            ps.setString(2, orderID);
-            int rows = ps.executeUpdate();
-            if (rows > 0) {
-                orderConn.commit();
-                return true;
-            }
-        } catch (SQLException e) {
-            System.out.println("Failed to update order status: " + e.getMessage());
-            try { orderConn.rollback(); } catch (SQLException ex) {}
+public boolean updateOrderStatus(String orderID, String newStatus, String currentStatus) {
+    String sql = "UPDATE order_items SET order_status = ? WHERE order_id = ? AND order_status = ?";
+    try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
+        ps.setString(1, newStatus);       // e.g., "COMPLETED"
+        ps.setString(2, orderID);         // e.g., "O001"
+        ps.setString(3, currentStatus);   // e.g., "READY" or "Pending"
+        int rows = ps.executeUpdate();
+        if (rows > 0) {
+            orderConn.commit();
+            return true;
         }
-        return false;
+    } catch (SQLException e) {
+        System.out.println("Failed to update order status: " + e.getMessage());
+        try { orderConn.rollback(); } catch (SQLException ex) {}
     }
-
-
+    return false;
+}
 
 
 
@@ -496,59 +495,56 @@ public void deleteItem(String orderId) {
     }
 
 
-public void updateStatus() {
-    //show the order that have "Done" status
+ public void updateStatus() {
 
+        while (true) {
 
-    System.out.print("Enter Order ID to update: ");
-    String oid = sc.next();
+            // Show only pending orders
+            List<String> readyOrders = this.viewOrderByStatus("READY");  
+            if (readyOrders.isEmpty()) {
+                System.out.println("No ready orders at the moment.");
+            } else {
+                System.out.println("Ready Orders:");
+                System.out.println("------------------------------------------");
+                for (String orderInfo : readyOrders) {
+                    System.out.println(orderInfo);
+                }
+                System.out.println("------------------------------------------");
+            }
 
-    // Check if order exists
-    String checkSql = "SELECT * FROM order_items WHERE order_id = ?";
-    try (PreparedStatement checkPs = orderConn.prepareStatement(checkSql)) {
-        checkPs.setString(1, oid);
-        ResultSet rs = checkPs.executeQuery();
-        if (!rs.next()) {
-            System.out.println("Order ID not found.");
-            return;
+            System.out.println("1. Update Order Status to COMPLETED");
+            System.out.println("2. Exit");
+            System.out.print("Select: ");
+
+            String choice = sc.nextLine();
+
+            if (choice.equals("2")) {
+                return;   // exit to main menu
+            }
+
+            if (!choice.equals("1")) {
+                System.out.println("Invalid choice.");
+                continue;
+            }
+
+            // Ask for order ID
+            System.out.print("Enter Order ID to mark as READY (or x to cancel): ");
+            String orderID = sc.nextLine();
+
+            if (orderID.equalsIgnoreCase("x")) {
+                continue;
+            }
+
+            // Update the order status using Order class
+            boolean updated = this.updateOrderStatus(orderID, "COMPLETED","READY");
+
+            if (updated) {
+                System.out.println("Order " + orderID + "COMPLETED.");
+            } else {
+                System.out.println("Order not found or already completed.");
+            }
         }
-    } catch (SQLException e) {
-        System.out.println("Search failed: " + e.getMessage());
-        return;
     }
-
-    System.out.println("\n--- Update Order Status ---");
-    System.out.println("1. Mark as COMPLETE");
-    System.out.println("2. Exit");
-    System.out.print("Enter your choice: ");
-    int ch = sc.nextInt();
-
-    if (ch == 2) {
-        System.out.println("Status update cancelled.");
-        return;
-    }
-
-    if (ch != 1) {
-        System.out.println("Invalid choice.");
-        return;
-    }
-
-    // Update to COMPLETE
-    String sql = "UPDATE order_items SET order_status = 'Complete' WHERE order_id = ?";
-
-    try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
-        ps.setString(1, oid);
-
-        if (ps.executeUpdate() > 0) {
-            orderConn.commit();
-            System.out.println("Order status updated to COMPLETE!");
-        }
-
-    } catch (SQLException e) {
-        System.out.println("Status update failed: " + e.getMessage());
-        try { orderConn.rollback(); } catch (SQLException ex) {}
-    }
-}
 
 
 
@@ -794,7 +790,7 @@ public void editOrder() {
             switch (choice) { 
                 case 1 -> takeOrder(); 
                 case 2 -> viewOrder(); 
-                case 3 -> editOrder(); 
+                case 3 -> updateStatus(); 
                 case 4 -> System.out.println("Exiting..."); 
                 default -> System.out.println("Invalid choice."); 
             } 
