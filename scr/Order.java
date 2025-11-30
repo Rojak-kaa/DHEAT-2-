@@ -33,6 +33,33 @@ public class Order {
         pay = new Payment(orderConn);
     }
 
+    // =============================
+    // INPUT HELPERS
+    // =============================
+    // Returns non-empty trimmed input; repeats until valid.
+    private String getRequiredInput(String message) {
+        while (true) {
+            System.out.print(message);
+            String input = sc.nextLine();
+            if (input == null || input.trim().isEmpty()) {
+                System.out.println("Empty input, please try again.");
+                continue;
+            }
+            return input;
+        }
+    }
+
+    // Returns a parsed integer; repeats until valid non-empty integer entered.
+    private int getRequiredInt(String message) {
+        while (true) {
+            String input = getRequiredInput(message);
+            try {
+                return Integer.parseInt(input.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Please enter a valid integer.");
+            }
+        }
+    }
 
     // =============================
     // CONNECT TO order_list
@@ -64,8 +91,6 @@ public class Order {
         }
     }
     
-
-
     // CONNECT TO inventory
     private void initializeInventoryDatabase() {
         try {
@@ -111,8 +136,6 @@ public class Order {
         // Generate order ID
         order_id = "O" + (System.currentTimeMillis()%1000);
         System.out.println("Order ID: " + order_id);
-   
- 
 
         // INSERT NEW ORDER HEADER
         createNewOrder(order_id);
@@ -126,8 +149,7 @@ public class Order {
             String table = "";
 
             while (!valid) {
-                System.out.print("Item ID: ");
-                i_id = sc.next();
+                i_id = getRequiredInput("Item ID: ").trim();
 
                 String sqlCheck = """
                 SELECT f_id AS id, f_name AS name, f_price AS price, f_quantity AS qty, 'food' AS tbl
@@ -153,12 +175,18 @@ public class Order {
                         stock = rs.getInt("qty");
                         table = rs.getString("tbl");
 
+                          if (stock == 0) {
+                            System.out.println("Sorry! '" + i_name + "' is OUT OF STOCK and cannot be added.");
+                            valid = false; // don't proceed to quantity input
+                            continue; // exit current item selection loop
+                        }
+
                         System.out.println("Item Name: " + i_name);
                         System.out.println("Price: RM " + i_price);
                         System.out.println("Stock: " + stock);
                         valid = true;
                     } else {
-                        System.out.println("Invalid input. The Item is not avaliable.");
+                        System.out.println("Invalid input. The Item is not available.");
                         System.out.println("Please enter a valid item");
                     }
                 } catch (SQLException e) {
@@ -168,18 +196,17 @@ public class Order {
 
             // Quantity
             do {
-                System.out.print("Quantity: ");
-                i_quantity = sc.nextInt();
+                
+                i_quantity = getRequiredInt("Quantity: ");
                 if (i_quantity > stock) {
                     System.out.println("Not enough stock!");
+                    break;
                 } else if (i_quantity <= 0) {
                     System.out.println("Invalid quantity. Please enter more than 0");
                 }
-            } while (i_quantity > stock || i_quantity <= 0  );
+            } while (i_quantity > stock || i_quantity <= 0);
 
-            sc.nextLine();
-            System.out.print("Remark: ");
-            i_remark = sc.nextLine();
+            i_remark = getRequiredInput("Remark: ");
 
             // Calculate total
             item_total = i_quantity * i_price;
@@ -192,16 +219,11 @@ public class Order {
 
             // UPDATE INVENTORY
             reduceStock(table, i_id, stock - i_quantity);
-                try {
-
-                    invtConn.commit(); // commit inventory changes
-
-                } catch (SQLException e) {
-
-                    System.out.println("Inventory commit failed: " + e.getMessage());
-
-                }
- 
+            try {
+                invtConn.commit(); // commit inventory changes
+            } catch (SQLException e) {
+                System.out.println("Inventory commit failed: " + e.getMessage());
+            }
 
             // Commit changes
             try {
@@ -216,8 +238,14 @@ public class Order {
                 }
             }
 
-            System.out.print("\nAdd more items? (y/n): ");
-            more = sc.next().charAt(0);
+            // Ask to add more items (expect 'y' or 'n')
+            String moreInput;
+            while (true) {
+                moreInput = getRequiredInput("\nAdd more items? (y/n): ").trim().toLowerCase();
+                if (moreInput.equals("y") || moreInput.equals("n")) break;
+                System.out.println("Please enter 'y' or 'n'.");
+            }
+            more = moreInput.charAt(0);
         }
 
         System.out.println("\n=================================== ORDER COMPLETE =========================================");
@@ -236,10 +264,9 @@ public class Order {
             System.out.println("2. Cancel order");
             System.out.println("3. Confirm order");
             System.out.println("4. Exit");
-            System.out.print("Enter num: ");
-            choice = sc.nextInt();
-            sc.nextLine();
-            
+
+            choice = getRequiredInt("Enter num: ");
+
             switch (choice) {
                 case 1 -> {
                     editOrder();
@@ -253,9 +280,7 @@ public class Order {
                     System.out.println("\n1. Cancel order");
                     System.out.println("2. Cancel item");
                     System.out.println("3. Exit");
-                    System.out.print("Enter num: ");
-                    int cancelChoice = sc.nextInt();
-                    sc.nextLine();
+                    int cancelChoice = getRequiredInt("Enter num: ");
                     switch (cancelChoice) {
                         case 1 -> {
                             cancelOrder(order_id);
@@ -272,6 +297,7 @@ public class Order {
                         case 3 -> {
                             break;
                         }
+                        default -> System.out.println("Invalid choice.");
                     }
                 }
                 case 3 -> {
@@ -283,7 +309,7 @@ public class Order {
                 }
                 default -> {
                     System.out.println("Invalid number.");
-                    return;
+                    break;
                 }
             }
         } while (true); // Keep showing confirmation menu until user exits or confirms
@@ -394,8 +420,7 @@ public class Order {
     }
 
     public void deleteItem(String orderId) {
-        System.out.print("Enter Item ID to remove from order: ");
-        String itemId = sc.next();
+        String itemId = getRequiredInput("Enter Item ID to remove from order: ").trim();
 
         // 1. Check if the item exists in this order
         String checkSql = "SELECT i_quantity FROM order_items WHERE order_id = ? AND i_id = ?";
@@ -459,7 +484,7 @@ public class Order {
 
         orderConn.commit(); // <-- commit here ensures the order header is saved
 
-        System.out.println("Order header created!");
+        System.out.println();
 
     } catch (SQLException e) {
 
@@ -470,8 +495,6 @@ public class Order {
     }
 
 }
-
-
 
     // Insert item into order_items
     private void addItemToOrder(String orderId, String itemId, String name, int qty, double price, double total, String remark, String status) {
@@ -517,9 +540,8 @@ public class Order {
 
             System.out.println("1. Update Order Status to COMPLETED");
             System.out.println("2. Exit");
-            System.out.print("Select: ");
 
-            String choice = sc.nextLine();
+            String choice = getRequiredInput("Select: ").trim();
 
             if (choice.equals("2")) {
                 return;
@@ -531,8 +553,7 @@ public class Order {
             }
 
             // Ask for order ID
-            System.out.print("Enter Order ID to mark as COMPLETED (or x to cancel): ");
-            String orderID = sc.nextLine();
+            String orderID = getRequiredInput("Enter Order ID to mark as COMPLETED (or x to cancel): ").trim();
 
             if (orderID.equalsIgnoreCase("x")) {
                 continue;
@@ -681,8 +702,7 @@ public class Order {
         // 2. Ask which item to edit
         String editItemId;
         while (true) {
-            System.out.print("Enter the Item ID you want to edit (or x to return): ");
-            editItemId = sc.nextLine();
+            editItemId = getRequiredInput("Enter the Item ID you want to edit (or x to return): ").trim();
             if (editItemId.equalsIgnoreCase("x")) return;
             if (itemIds.contains(editItemId)) break;
             System.out.println("Item not found.");
@@ -693,22 +713,20 @@ public class Order {
         System.out.println("1. Edit Remark");
         System.out.println("2. Edit Quantity");
         System.out.println("3. Cancel");
-        System.out.print("Enter choice (or x to return): ");
-        String choiceInput = sc.nextLine();
+        String choiceInput = getRequiredInput("Enter choice (or x to return): ").trim();
         if (choiceInput.equalsIgnoreCase("x")) return;
 
-        int choice;
+        int localChoice;
         try {
-            choice = Integer.parseInt(choiceInput);
+            localChoice = Integer.parseInt(choiceInput);
         } catch (NumberFormatException e) {
             System.out.println("Invalid choice. Returning to confirmation menu.");
             return;
         }
 
-        switch (choice) {
+        switch (localChoice) {
             case 1 -> {
-                System.out.print("New Remark (or press Enter to skip): ");
-                String newRemark = sc.nextLine();
+                String newRemark = getRequiredInput("New Remark (or press Enter to skip): ");
                 if (!newRemark.isEmpty()) {
                     String sql = "UPDATE order_items SET i_remark = ? WHERE order_id = ? AND i_id = ?";
                     try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) {
@@ -751,9 +769,8 @@ public class Order {
 
                 int newQty;
                 while (true) {
-                    System.out.print("New Quantity (or press Enter to skip): ");
-                    String input = sc.nextLine();
-                    if (input.isEmpty()) return;
+                    String input = getRequiredInput("New Quantity (or press Enter to skip): ").trim();
+                    if (input.equalsIgnoreCase("x")) return;
                     try {
                         newQty = Integer.parseInt(input);
                         if (newQty <= 0) System.out.println("Quantity must be more than 0.");
@@ -787,43 +804,43 @@ public class Order {
     }
 
     public void orderSystem() {
-        do { 
-            System.out.println("\n====== Waiter/Cashier Menu ======"); 
-            System.out.println("1. Take Order"); 
-            System.out.println("2. View Orders"); 
-            System.out.println("3. Update Order Status"); 
+        do {
+            System.out.println("\n====== Waiter/Cashier Menu ======");
+            System.out.println("1. Take Order");
+            System.out.println("2. View Orders");
+            System.out.println("3. Update Order Status");
             System.out.println("4. Generate Sales Report");
-            System.out.println("5. Exit"); 
-            System.out.print("Enter your choice: "); 
-            choice = sc.nextInt(); 
-            sc.nextLine();
-            
-            switch (choice) { 
-                case 1 -> takeOrder(); 
-                case 2 -> viewOrder(); 
+            System.out.println("5. Exit");
+            choice = getRequiredInt("Enter your choice: ");
+
+            switch (choice) {
+                case 1 -> takeOrder();
+                case 2 -> viewOrder();
                 case 3 -> {
                     System.out.println("\n-----------------------------------------Update Status------------------------------------------");
-                    updateStatus(); 
+                    updateStatus();
                 }
                 case 4 -> {
-                    System.out.println("--------- Report ----------");
+                    int reportChoice;
+                    do{
+                    System.out.println("\n--------- Report ----------");
                     System.out.println("1. Monthly report");
                     System.out.println("2. Weekly report");
                     System.out.println("3. EXIT");
-                    System.out.print("Enter number: ");
-                    int reportChoice = sc.nextInt();
-                    sc.nextLine();
+                    reportChoice = getRequiredInt("Enter number: ");
 
                     switch (reportChoice) {
-                        case 1 -> pay.monthlyReport();
-                        case 2 -> pay.weeklyReport();
-                        case 3 -> {return;}
+                        case 1 -> {pay.monthlyReport();}
+                        case 2 -> {pay.weeklyReport();break;}
+                        case 3 -> {break;}
                         default -> System.out.println("Invalid choice.");
                     }
+                }while(reportChoice != 3);
+                
                 }
-                case 5 -> System.out.println("Exiting..."); 
-                default -> System.out.println("Invalid choice."); 
-            } 
+                case 5 -> System.out.println("Exiting...");
+                default -> System.out.println("Invalid choice.");
+            }
         } while (choice != 5);
     }
 }
