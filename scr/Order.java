@@ -6,8 +6,7 @@ public class Order {
     private Connection orderConn;   // order_list
     private Connection invtConn;    // inventory
     private Scanner sc = new Scanner(System.in);
-   // private Payment pay ;
-   private Payment pay;
+    private Payment pay;
 
 
     // Order fields
@@ -783,15 +782,36 @@ public void editOrder() {
             System.out.println("1. Take Order"); 
             System.out.println("2. View Orders"); 
             System.out.println("3. Update Status"); 
-            System.out.println("4. Exit"); 
+            System.out.println("4. View Report");
+            System.out.println("5. Exit"); 
             System.out.print("Enter your choice: "); 
             choice = sc.nextInt(); 
+            sc.nextLine();
             
             switch (choice) { 
                 case 1 -> takeOrder(); 
                 case 2 -> viewOrder(); 
                 case 3 -> updateStatus(); 
-                case 4 -> System.out.println("Exiting..."); 
+                case 4 -> 
+                {
+                    System.out.println("--------- Report ----------");
+                    System.out.println("1.Monthly report");
+                    System.out.println("2.Weekly report");
+                    System.out.println("3.EXIT");
+                    System.out.print("Enter number:");
+                    choice = sc.nextInt();
+                    sc.nextLine();
+
+                    switch (choice) {
+                        case 1: pay.monthlyReport();break;
+                        case 2:pay.weeklyReport();break;
+                        case 3: break;
+                        default: break;
+                    }
+
+
+                }
+                case 5 -> System.out.println("Exiting..."); 
                 default -> System.out.println("Invalid choice."); 
             } 
         } while (choice != 4); }
