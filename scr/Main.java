@@ -8,7 +8,8 @@ public class Main {
         Order order = new Order();
         Billing billing = new Billing();
         Scanner sc= new Scanner(System.in);
-        //KitchenStaff ks = new KitchenStaff();
+        KitchenStaff ks = new KitchenStaff(order);
+        
         
 
         int userChoice;
@@ -31,19 +32,9 @@ public class Main {
         sc.nextLine();
         switch(userChoice)
         {
-            case 1 ->
-            {
-                
-                order.orderSystem();
-                billing.calculateBill(order.order_id);
-
-            }
-            case 2 ->
-            {
-                
-                //ks.updateStatus();
-            }
-            case 3 ->
+            case 1 : order.orderSystem();break;
+            case 2 :ks.updateStatus();break;
+            case 3 :
             {
                 System.out.println("Bye. See you next time!");
                 System.exit(0);
@@ -51,13 +42,14 @@ public class Main {
 
             }
 
-            default -> {
+            default :
+            {
                 System.out.println("Invalid choice.Enter 1,2 or 3 only.");
                 break;
             }
         }
             
-        } while (userChoice != 3);
+        } while (userChoice!=3);
 
 
     }

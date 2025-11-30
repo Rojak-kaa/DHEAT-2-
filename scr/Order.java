@@ -72,6 +72,27 @@ private void initializeOrderDatabase() {
     }
 
 
+        public List<String> viewOrderByStatus(String status) {
+        List<String> orders = new ArrayList<>();
+        String sql = "SELECT order_id, i_name, i_quantity, i_remark, order_status FROM order_items WHERE order_status = ?";
+        try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                String info = "Order ID: " + rs.getString("order_id") +
+                        " | Item: " + rs.getString("i_name") +
+                        " | Qty: " + rs.getInt("i_quantity") +
+                        " | Remark: " + rs.getString("i_remark") +
+                        " | Status: " + rs.getString("order_status");
+                orders.add(info);
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to query orders by status: " + e.getMessage());
+        }
+        return orders;
+    }
+
+
 
     // =====================================================
     // TAKE ORDER (create order + insert multiple items)
@@ -256,6 +277,27 @@ private void initializeOrderDatabase() {
 
 
     }
+
+
+       public boolean updateOrderStatus(String orderID, String newStatus) {
+        String sql = "UPDATE order_items SET order_status = ? WHERE order_id = ? AND order_status = 'Pending'";
+        try (PreparedStatement ps = orderConn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setString(2, orderID);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                orderConn.commit();
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("Failed to update order status: " + e.getMessage());
+            try { orderConn.rollback(); } catch (SQLException ex) {}
+        }
+        return false;
+    }
+
+
+
 
 
     public void cancelOrder(String oid) {
@@ -555,20 +597,22 @@ public void updateStatus() {
     }
 
     // --------------------------- // VIEW ORDER // --------------------------- 
-    public void viewOrder() { 
-        System.out.println("====== View All Orders ======"); 
-        String sql = "SELECT order_id,i_id,i_name,i_quantity,i_remark,order_status FROM order_items"; 
-        try (Statement stmt = orderConn.createStatement(); ResultSet rs = stmt.executeQuery(sql))
-        { while (rs.next()) { 
-            System.out.println("Order ID: " + rs.getString("order_id") + 
-            " | Item ID: " + rs.getString("i_id") +
-            " | Item Name: "+ rs.getString("i_name") + 
-            " | Quantity: " + rs.getInt("i_quantity") + 
-            " | Remark: " + rs.getString("i_remark")+
-            " | Order Status: "+ rs.getString("order_status") ); 
+    public void viewOrder() {
+        System.out.println("====== View All Orders ======");
+        String sql = "SELECT order_id,i_id,i_name,i_quantity,i_remark,order_status FROM order_items";
+        try (Statement stmt = orderConn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println("Order ID: " + rs.getString("order_id") +
+                        " | Item ID: " + rs.getString("i_id") +
+                        " | Item Name: " + rs.getString("i_name") +
+                        " | Quantity: " + rs.getInt("i_quantity") +
+                        " | Remark: " + rs.getString("i_remark") +
+                        " | Order Status: " + rs.getString("order_status"));
             }
-        } catch (SQLException e) { System.out.println("Failed to query orders: " + e.getMessage()); } }
-
+        } catch (SQLException e) {
+            System.out.println("Failed to query orders: " + e.getMessage());
+        }
+    }
         // --------------------------- // SEARCH ORDER (by ID) // --------------------------- 
  public boolean searchOrder(String oid) {
 
