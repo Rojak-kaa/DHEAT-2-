@@ -56,7 +56,13 @@ public class KitchenStaff {
                 System.out.println("Order " + orderID + " marked as READY! Notify waiter.");
             } else {
                 System.out.println("Order not found or already completed.");
+                System.out.println("Please enter a valid Order ID.\n");
             }
+
+            
         }
+
+        
     }
+    
 }

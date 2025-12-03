@@ -11,6 +11,9 @@ public class Payment {
         this.orderConn = conn;
     }
 
+
+    
+
     // ============================
     // Bill Item Inner Class
     // ============================
@@ -66,6 +69,33 @@ public class Payment {
         return items;
     }
 
+
+        private String getRequiredInput(String message) {
+        while (true) {
+            System.out.print(message);
+            String input = sc.nextLine();
+            if (input == null || input.trim().isEmpty()) {
+                System.out.println("Empty input, please try again.");
+                continue;
+            }
+            return input; 
+        }
+    }
+
+    // Returns a parsed integer; repeats until valid non-empty integer entered.
+    private int getRequiredInt(String message) {
+        while (true) {
+            String input = getRequiredInput(message);
+            try {
+                return Integer.parseInt(input.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Please enter a valid integer.");
+            }
+        }
+    }
+
+
+
     // ============================
     // Print Bill
     // ============================
@@ -113,16 +143,17 @@ public class Payment {
         System.out.println("\nPayment Method:");
         System.out.println("1. Cash");
         System.out.println("2. QR / Debit Card");
-        System.out.print("Enter number: ");
+        //System.out.print("Enter number: ");
+        choice = getRequiredInt("Enter number: ");
         
-        
-        try {
-            choice = sc.nextInt();
-        } catch (InputMismatchException e) {
-            System.out.println("Invalid input. Please enter 1 or 2.");
-            sc.nextLine(); // clear the invalid input
-            return;
-        }
+        // try {
+            
+        //     choice = sc.nextInt();
+        // } catch (InputMismatchException e) {
+        //     System.out.println("Invalid input. Please enter 1 or 2.");
+        //     sc.nextLine(); // clear the invalid input
+        //     return;
+        // }
 
 
         if (choice == 1) {

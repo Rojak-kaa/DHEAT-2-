@@ -45,7 +45,7 @@ public class Order {
                 System.out.println("Empty input, please try again.");
                 continue;
             }
-            return input;
+            return input; 
         }
     }
 
@@ -430,7 +430,7 @@ public class Order {
             ps.setString(2, itemId);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) {
-                System.out.println("Item not found in this order.");
+                System.out.println("Item not found. Please enter a valid item id.");
                 return;
             }
             qty = rs.getInt("i_quantity");
@@ -528,7 +528,7 @@ public class Order {
             // Show only ready orders
             List<String> readyOrders = this.viewOrderByStatus("READY");  
             if (readyOrders.isEmpty()) {
-                System.out.println("No ready orders at the moment.");
+                System.out.println("No ready orders at the moment.\n");
             } else {
                 System.out.println("Ready Orders:\n");
 
@@ -565,8 +565,8 @@ public class Order {
             if (updated) {
                 System.out.println("Order " + orderID + " COMPLETED.");
             } else {
-                System.out.println("Order not found or already completed.");
-                System.out.println("Please enter a valid Order ID.\n");
+                System.out.print("Order not found or already Completed.");
+                
             }
         }
     }
@@ -617,7 +617,7 @@ public class Order {
 
     // --------------------------- // VIEW ORDER // --------------------------- 
     public void viewOrder() {
-        System.out.println("====== View All Orders ======");
+        System.out.println("===================================== View All Orders ============================================");
         String sql = "SELECT order_id, i_id, i_name, i_quantity, i_remark, order_status FROM order_items";
         try (Statement stmt = orderConn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -726,7 +726,7 @@ public class Order {
 
         switch (localChoice) {
             case 1 -> {
-                String newRemark = getRequiredInput("New Remark (or press Enter to skip): ");
+                String newRemark = getRequiredInput("New Remark : ");
                 if (!newRemark.isEmpty()) {
                     String sql = "UPDATE order_items SET i_remark = ? WHERE order_id = ? AND i_id = ?";
                     try (PreparedStatement pstmt = orderConn.prepareStatement(sql)) {
@@ -769,7 +769,7 @@ public class Order {
 
                 int newQty;
                 while (true) {
-                    String input = getRequiredInput("New Quantity (or press Enter to skip): ").trim();
+                    String input = getRequiredInput("New Quantity: ").trim();
                     if (input.equalsIgnoreCase("x")) return;
                     try {
                         newQty = Integer.parseInt(input);
@@ -833,7 +833,7 @@ public class Order {
                         case 1 -> {pay.monthlyReport();}
                         case 2 -> {pay.weeklyReport();break;}
                         case 3 -> {break;}
-                        default -> System.out.println("Invalid choice.");
+                        default -> System.out.println("Sales not found. Please choose a valid option.");
                     }
                 }while(reportChoice != 3);
                 
