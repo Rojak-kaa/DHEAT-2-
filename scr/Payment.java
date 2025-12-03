@@ -80,7 +80,9 @@ public class Payment {
             }
             return input; 
         }
+        
     }
+
 
     // Returns a parsed integer; repeats until valid non-empty integer entered.
     private int getRequiredInt(String message) {
@@ -93,6 +95,22 @@ public class Payment {
             }
         }
     }
+
+       private double getRequiredDouble(String message) {
+    while (true) {
+        String input = getRequiredInput(message);
+        try {
+            return Double.parseDouble(input.trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number. Please enter a valid amount.");
+        }
+    }
+}
+
+
+
+
+
 
 
 
@@ -179,9 +197,9 @@ public class Payment {
     private void processCashPayment(double totalAmount) {
         double cash;
         do {
-            System.out.print("Enter cash amount: RM ");
+            
             try {
-                cash = sc.nextDouble();
+              cash = getRequiredDouble("Enter cash amount: RM ");  
             } catch (InputMismatchException e) {
                 System.out.println("Invalid amount. Please enter a valid number.");
                 sc.nextLine(); // clear invalid input
